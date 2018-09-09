@@ -1,0 +1,99 @@
+#Class 4
+#Analysis of Microarray data
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("SpikeInSubset") # biocLite is a function
+
+#loading this package
+library(SpikeInSubset) # library where we have datasets; SpikeInSubset is package
+library(affy)
+
+# Load data
+data(spikein95) # spikein95 is dataset
+
+#Chek the chips
+image(spikein95)
+
+#collect the gene ids from dataset and put it into an object
+ids <- geneNames(spikein95) # we make an object, geneNames is fuction
+
+#ids - show the ids
+ids[1:10]
+
+
+# perform Mas 5.0 normalization
+Mas  <- mas5(spikein95)
+#Mas <- mas5(spikein95, col=2:5) # put normalized data in object, mas5 is a function
+mas_log <- log2(exprs(Mas)) # taking expression values with the function exprs
+
+# Box plot for row data and boxplot for normalized data on log fold
+boxplot(spikein95)
+x11() # separate windows
+boxplot(mas_log)
+
+#density plot
+density <- density(mas_log[,1]) #density function
+plot(density, main="Mas mormalization")
+
+density2 <- density(mas_log[,2]) # column 2 second sample
+lines(density2, col="red")
+
+density3 <- density(mas_log[,3])
+lines(density3, col="blue")
+
+# Making MA plots
+# M: difference in average log intensities
+# A: average log intensities
+
+d <- rowMeans(mas_log[,1:3] - rowMeans(mas_log[,4:6]))
+a <- rowMeans(mas_log)
+
+# Plotting data
+plot(a,d, ylim = c(-5,5), main= "Mas 5.0 normalized MA plot",
+xlab = "A", ylab = "M", pch = ".") # 2 objects a nad b
+
+abline(h = c(-1.5,1.5), col="red") 
+
+rma.eset <- rma(spikein95)
+rma.e <- exprs(rma.eset) # we collect expression values 
+
+head(rma.e)
+head(mas_log)
+
+x11()
+boxplot(mas_log, col = 2:5, main = "Mas 5 Norm")
+x11()
+boxplot(rma.e, col = 2:5, main = "RMA Norm")
+
+# finding specific genes/probes in MA plot
+
+spikedn <- colnames(pData(spikein95))
+spikedIndex <- match(spikedn, featureNames(Mas))
+points(a[spikedIndex], d[spikedIndex], pch=19, col="red")
+
+# Volcano Plots
+source("https://bioconductor.org/biocLite.R")
+biocLite("genefilter") #??? update
+library("genefilter") 
+pData(rma.eset) <- pData(Mas)
+tt <- rowMeans(rma.e)
+lod <- tt
+plot(d, lod, cex = 0.25, main = "Volcano plot for MA", xlim = c(-2, 2), xlab = "M", ylab = "A", yaxt = "n")
+axis(2, at = seq(0, 3, by = 1), labels = 10^(-seq(0, 3, by = 1)))
+points(d[spikedIndex], lod[spikedIndex], pch = 19, col = "red")
+abline(h = 2, v = c(-1, 1))
+
+
+# Exercise to practice
+
+https://rawgit.com/bioinformatics-core-shared-training/microarray-analysis/master/de-tutorial.html
+
+https://rawgit.com/bioinformatics-core-shared-training/microarray-analysis/master/affymetrix.nb.html
+
+
+library(affy)
+setwd("C:/Users/Natalia/Documents"/estrogen")
+targetsFile <- "estrogen/estrogen.txt"
+targetsFile
+
+
