@@ -72,8 +72,8 @@ spikedIndex <- match(spikedn, featureNames(Mas))
 points(a[spikedIndex], d[spikedIndex], pch=19, col="red")
 
 # Volcano Plots
-source("https://bioconductor.org/biocLite.R")
-biocLite("genefilter") #??? update
+source("https://bioconductor.org/biocLite.R") #update - latest version of Bioconductor
+biocLite("genefilter")  #??? Install specific packages
 library("genefilter") 
 pData(rma.eset) <- pData(Mas)
 tt <- rowMeans(rma.e)
@@ -91,9 +91,83 @@ https://rawgit.com/bioinformatics-core-shared-training/microarray-analysis/maste
 https://rawgit.com/bioinformatics-core-shared-training/microarray-analysis/master/affymetrix.nb.html
 
 
+
 library(affy)
-setwd("C:/Users/Natalia/Documents"/estrogen")
+setwd("C:/Users/Natalia/Documents/GitHub/Class_4/estrogen/estrogen")
 targetsFile <- "estrogen/estrogen.txt"
 targetsFile
+pd <- read.AnnotatedDataFrame(targetsFile,header=TRUE,sep="",row.names=1)
+pData(pd)
+
+ER <- pData(pd)$estrogen
+Time <- factor(pData(pd)$time.h)
+design <- model.matrix(~ER+Time)
+design
+
+design2 <- model.matrix(~ER*Time)
+design2
+
+#raw <-ReadAffy(celfile.path = "C:/Users/Natalia/Documents/GitHub/Class_4/estrogen/estrogen", filenames=rownames(pData(pd)),phenoData = pd)
+#raw
+raw <-ReadAffy(celfile.path = "estrogen", filenames=rownames(pData(pd)),phenoData = pd) #!!!!
+raw
+
+
+boxplot(raw,col="red",las=2) #las=2 to make labels perpendicular to the axis
+
+par(mfrow=c(2,1)) ## 2 gistograms in 1 windov
+
+hist(log2(pm(raw[,1])),breaks=100,col="steelblue",main="PM",xlim=c(4,14))
+hist(log2(mm(raw[,1])),breaks=100,col="steelblue",main="MM",xlim=c(4,14))
+
+
+
+source("https://bioconductor.org/biocLite.R")
+biocLite("affyPLM")  ##installation path not writeable, unable to update packages: foreign, survival???
+library(affyPLM)
+
+plmset <- fitPLM(raw) ##This function converts an AffyBatch into an PLMset by fitting a specified robust linear model to the probe level data. 
+NUSE(plmset,las=2)
+
+#bad <- ReadAffy(celfile.path = "C:/Users/Natalia/Documents/GitHub/Class_4/estrogen/estrogen",filenames="bad.cel")
+bad <- ReadAffy(celfile.path = "estrogen/",filenames="bad.cel")
+image(bad)
+
+
+par(mfrow=c(2,4))
+image(raw[,1])
+image(raw[,2])
+
+image(raw[,3])
+image(raw[,4])
+
+image(raw[,5])
+image(raw[,6])
+
+image(raw[,7])
+image(raw[,8])
+##If we are happy with the quality of the raw data we can proceed to the next step
+
+
+## Normalization
+eset <- rma(raw)
+
+library(limma) ## ?????????? there is no package called ‘limma’
+fit1 <- lmFit(eset, design)
+fit1 <- eBayes(fit1)
+topTable(fit1, coef=2)
+
+fit2 <- lmFit(eset, design2)
+fit2 <- eBayes(fit2)
+topTable(fit2, coef=2)
+
+
+#Annotation of samples
+library(GEOquery)
+library(limma)
+url <- "ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE33nnn/GSE33126/matrix/GSE33126_series_matrix.txt.gz"
+filenm <- "GSE33126_series_matrix.txt.gz"
+if(!file.exists(filenm)) download.file(url, destfile=filenm)
+gse <- getGEO(filename=filenm)
 
 
